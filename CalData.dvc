@@ -1,0 +1,5 @@
+outs:
+- md5: 42d0e7cfffc0948ca49c4a1c5b5d8f19.dir
+  size: 18669900136
+  nfiles: 4
+  path: CalData

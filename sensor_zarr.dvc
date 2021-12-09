@@ -1,0 +1,5 @@
+outs:
+- md5: dfabeb0ce477cb7311f64ed48eefdb41.dir
+  size: 20984089390
+  nfiles: 5441
+  path: sensor_zarr
