@@ -1,0 +1,12 @@
+[cache]
+    type = symlink
+    dir = cache
+[core]
+    remote = wasabi
+    analytics = false
+    check_update = false
+['remote "jeanzay"']
+    url = ssh://jeanzay/gpfswork/rech/yrf/ual82ir/dvc_remote
+['remote "wasabi"']
+    url = s3://dvc-data-versioning
+    endpointurl = https://s3.eu-central-1.wasabisys.com
