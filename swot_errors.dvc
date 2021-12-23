@@ -1,0 +1,5 @@
+outs:
+- md5: eae18188b252e933de89b1e8efe63c85.dir
+  size: 129970808600
+  nfiles: 29200
+  path: swot_errors

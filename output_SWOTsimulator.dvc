@@ -1,0 +1,12 @@
+md5: 1d87049182c9bb19f81dbe8f45c9f32b
+frozen: true
+deps:
+- path: data/raw/output_SWOTsimulator
+  repo:
+    url: https://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@github.com/CIA-Oceanix/research-quentin.git
+    rev_lock: 0ab31b7943143fd894585f874088ffc47104a1a1
+outs:
+- md5: 916873254d40ac954d14207b21986111.dir
+  size: 204233942255
+  nfiles: 21728
+  path: output_SWOTsimulator
