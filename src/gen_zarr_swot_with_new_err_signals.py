@@ -73,7 +73,7 @@ def compress_and_clean(src_folder, tgt_folder):
     src_store = zarr.DirectoryStore(src_folder)
     tgt_store = zarr.DirectoryStore(tgt_folder)
     xr.Dataset().to_zarr(tgt_store, mode="w", consolidated=True)
-    groups = [f"{dt.year}/{dt.month}" for dt in pd.date_range("2012-10-01", "2013-09-30", freq='MS')]
+    groups = [f"{dt.year}/{dt.month}" for dt in pd.date_range("2012-10-01", "2013-10-01", freq='MS')]
     for g in tqdm(groups):
         ds = xr.open_zarr(src_store, group=g)
         new_ds = (
@@ -100,7 +100,7 @@ def main():
         swot_files = sorted(list(Path('output_SWOTsimulator/swot_HD').glob('BOOST-SWOT_SWOT_c*_p*.nc')))
         swot_files = swot_files
         err_files = all_2d_files
-        dates = pd.date_range('2012-10-01', '2013-09-30')
+        dates = pd.date_range('2012-10-01', '2013-10-01')
 
         print("writing raw zarr")
         sync_read(dates=dates, swot_files=swot_files, err_files=err_files)
