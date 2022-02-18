@@ -1,4 +1,8 @@
+import sys
+import time
 import pyinterp
+import zarr
+import pandas as pd
 import numpy as np
 import xarray as xr
 from pathlib import Path
@@ -87,33 +91,13 @@ def main():
     }
 
     grid_obs_vars = {
-            'four_nadirs': four_nadirs,
-            'five_nadirs': five_nadirs,
-            'swot_nadirs_no_noise': {
+            'swot_nadirs_only_syst_errors': {
                 **five_nadirs,
-                'swot': ['ssh_model'],
+                'swot': ['ssh_model', 'syst_error_uncalibrated'],
             },
-            'swot_no_noise': {
+            'swot_nadirs_only_roll': {
                 **five_nadirs,
-                'swot': ['ssh_model'],
-            },
-            'swot_nadirs_old_errors': {
-                **five_nadirs,
-                'swot': ['ssh_model', 'phase_err', 'karin_err', 'roll_err', 'bd_err', 'timing_err'],
-            },
-            'swot_nadirs_new_errors_no_wet_tropo': {
-                **five_nadirs,
-                'swot': ['ssh_model', 'syst_error_uncalibrated', 'karin_noise'],
-            },
-            'swot_nadirs_new_errors_w_wet_tropo': {
-                **five_nadirs,
-                'swot': ['ssh_model', 'syst_error_uncalibrated', 'wet_tropo_res', 'karin_noise'],
-            },
-            'swot_new_errors_no_wet_tropo': {
-                'swot': ['ssh_model', 'syst_error_uncalibrated', 'karin_noise'],
-            },
-            'swot_new_errors_w_wet_tropo': {
-                'swot': ['ssh_model', 'syst_error_uncalibrated', 'wet_tropo_res', 'karin_noise'],
+                'swot_with_1d': ['ssh_model', 'roll_gyro2d', 'roll_knlg_2d', 'roll_orb_2d'],
             },
     }
     
@@ -136,6 +120,7 @@ def main():
             **{f'nadir_{name}': get_nadir_slice(root_dir / f'sensor_zarr/zarr/nadir/{name}', **slice_args) for name in
                ['swot', 'en', 'tpn', 'g2', 'j1']},
             'swot': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot', **slice_args),
+            'swot_1d': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot_with_1d', **slice_args),
         }
         # print(time.time() - t0)
 
@@ -174,7 +159,8 @@ def main():
 
     full_cal_ds = xr.concat(grid_day_dses, dim='time')
 
-    full_cal_ds.to_netcdf(root_dir / 'CalData/cal_data_new_errs.nc')
+    full_cal_ds.to_netcdf(root_dir / 'CalData/cal_data_new_syst_errs_150222.nc')
+    return locals()
 
     
 
