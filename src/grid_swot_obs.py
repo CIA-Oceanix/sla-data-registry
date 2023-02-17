@@ -78,89 +78,93 @@ def get_nadir_slice(path, **slice_args):
 
 
 def main():
-    root_dir = Path('../sla-data-registry') 
-    four_nadirs = {
-        'nadir_en': ['ssh_model'],
-        'nadir_tpn': ['ssh_model'],
-        'nadir_g2': ['ssh_model'],
-        'nadir_j1': ['ssh_model'],
-    }
-    five_nadirs = {
-        **four_nadirs,
-        'nadir_swot': ['ssh_model'],
-    }
-
-    grid_obs_vars = {
-            'swot_nadirs_only_syst_errors': {
-                **five_nadirs,
-                'swot': ['ssh_model', 'syst_error_uncalibrated'],
-            },
-            'swot_nadirs_only_roll': {
-                **five_nadirs,
-                'swot_with_1d': ['ssh_model', 'roll_gyro2d', 'roll_knlg_2d', 'roll_orb_2d'],
-            },
-    }
-    
-    tgt_grid = xr.open_dataset(root_dir / 'NATL60/NATL/data_new/dataset_nadir_0d.nc')[['time', 'lat', 'lon']]
-    binning = pyinterp.Binning2D(pyinterp.Axis(tgt_grid.lon.values), pyinterp.Axis(tgt_grid.lat.values))
-
-    grid_day_dses = []
-    # dt0 = dt_start
-    for dt_start, dt_end in zip(tgt_grid.time[:-1].values, tgt_grid.time[1:].values):
-        # if dt_start < dt0:
-        #     continue
-        print(dt_start, end='\r')
-        slice_args = {
-            "time_min": dt_start,
-            "time_max": dt_end,
+    try:
+        root_dir = Path('../sla-data-registry') 
+        four_nadirs = {
+            'nadir_en': ['ssh_model'],
+            'nadir_tpn': ['ssh_model'],
+            'nadir_g2': ['ssh_model'],
+            'nadir_j1': ['ssh_model'],
+        }
+        five_nadirs = {
+            **four_nadirs,
+            'nadir_swot': ['ssh_model'],
         }
 
-        t0 = time.time()
-        obs_data = {
-            **{f'nadir_{name}': get_nadir_slice(root_dir / f'sensor_zarr/zarr/nadir/{name}', **slice_args) for name in
-               ['swot', 'en', 'tpn', 'g2', 'j1']},
-            'swot': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot', **slice_args),
-            'swot_1d': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot_with_1d', **slice_args),
+        grid_obs_vars = {
+                'swot_nadirs_only_syst_errors': {
+                    **five_nadirs,
+                    'swot': ['ssh_model', 'syst_error_uncalibrated'],
+                },
+                'swot_nadirs_only_roll': {
+                    **five_nadirs,
+                    'swot_with_1d': ['ssh_model', 'roll_gyro2d', 'roll_knlg_2d', 'roll_orb_2d'],
+                },
         }
-        # print(time.time() - t0)
+        
+        tgt_grid = xr.open_dataset(root_dir / 'NATL60/NATL/data_new/dataset_nadir_0d.nc')[['time', 'lat', 'lon']]
+        binning = pyinterp.Binning2D(pyinterp.Axis(tgt_grid.lon.values), pyinterp.Axis(tgt_grid.lat.values))
 
-        tgt_day_vars = {}
-        for tgt_var, obs_vars in grid_obs_vars.items():
+        grid_day_dses = []
+        # dt0 = dt_start
+        for dt_start, dt_end in zip(tgt_grid.time[:-1].values, tgt_grid.time[1:].values):
+            # if dt_start < dt0:
+            #     continue
+            print(dt_start, end='\r')
+            slice_args = {
+                "time_min": dt_start,
+                "time_max": dt_end,
+            }
 
-            binning.clear()
-            for k, ds in obs_data.items():
+            t0 = time.time()
+            obs_data = {
+                **{f'nadir_{name}': get_nadir_slice(root_dir / f'sensor_zarr/zarr/nadir/{name}', **slice_args) for name in
+                   ['swot', 'en', 'tpn', 'g2', 'j1']},
+                'swot': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot', **slice_args),
+                'swot_with_1d': get_swot_slice(root_dir  / f'sensor_zarr/zarr/new_swot_with_1d', **slice_args),
+            }
+            # print(time.time() - t0)
 
-                if len(obs_vars.get(k, [])) == 0:
-                    continue
+            tgt_day_vars = {}
+            for tgt_var, obs_vars in grid_obs_vars.items():
 
-                if ds is None:
-                    continue
+                binning.clear()
+                for k, ds in obs_data.items():
 
-                ds_value = ds[obs_vars[k][0]]
-                for v in obs_vars[k][1:]:
-                    ds_value = ds_value + ds[v]
+                    if len(obs_vars.get(k, [])) == 0:
+                        continue
 
-                values = np.ravel(ds_value.values)
-                lons = np.ravel(ds.lon.values) - 360
-                lats = np.ravel(ds.lat.values)
+                    if ds is None:
+                        continue
 
-                msk = np.isfinite(values)
-                binning.push(lons[msk], lats[msk], values[msk])
+                    ds_value = ds[obs_vars[k][0]]
+                    for v in obs_vars[k][1:]:
+                        ds_value = ds_value + ds[v]
 
-            tgt_day_vars[tgt_var] =  (('time', 'lat', 'lon'), binning.variable('mean').T[None, ...])
+                    values = np.ravel(ds_value.values)
+                    lons = np.ravel(ds.lon.values) - 360
+                    lats = np.ravel(ds.lat.values)
 
-       
-        grid_day_dses.append(
-           xr.Dataset(
-               tgt_day_vars,
-               {'time': [dt_start + (dt_end - dt_start) / 2], 'lat': np.array(binning.y), 'lon': np.array(binning.x)}
-            ).astype('float32', casting='same_kind')
-        )
+                    msk = np.isfinite(values)
+                    binning.push(lons[msk], lats[msk], values[msk])
 
-    full_cal_ds = xr.concat(grid_day_dses, dim='time')
+                tgt_day_vars[tgt_var] =  (('time', 'lat', 'lon'), binning.variable('mean').T[None, ...])
 
-    full_cal_ds.to_netcdf(root_dir / 'CalData/cal_data_new_syst_errs_150222.nc')
-    return locals()
+           
+            grid_day_dses.append(
+               xr.Dataset(
+                   tgt_day_vars,
+                   {'time': [dt_start + (dt_end - dt_start) / 2], 'lat': np.array(binning.y), 'lon': np.array(binning.x)}
+                ).astype('float32', casting='same_kind')
+            )
+
+        full_cal_ds = xr.concat(grid_day_dses, dim='time')
+
+        full_cal_ds.to_netcdf(root_dir / 'CalData/cal_data_new_syst_errs_20220218.nc')
+    except Exception as e:
+        print(e)
+    finally:
+        return locals()
 
     
 
