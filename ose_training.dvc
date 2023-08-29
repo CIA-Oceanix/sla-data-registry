@@ -1,0 +1,5 @@
+outs:
+- md5: d839d00208676e71316588e979958836.dir
+  size: 25460210874
+  nfiles: 54
+  path: ose_training
