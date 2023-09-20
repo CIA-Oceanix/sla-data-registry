@@ -2,7 +2,7 @@
     type = symlink
     dir = cache
 [core]
-    remote = wasabi
+    remote = http
     analytics = false
     check_update = false
 ['remote "jeanzay"']
@@ -10,4 +10,6 @@
 ['remote "wasabi"']
     url = s3://sla-data-registry
     endpointurl = https://s3.eu-central-1.wasabisys.com
+['remote "http"']
+    url = https://s3.eu-central-1.wasabisys.com/sla-data-registry
 
